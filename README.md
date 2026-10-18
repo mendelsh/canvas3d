@@ -1,8 +1,8 @@
 # canvas3d
 
-A small 3D renderer in Go, built on SDL3's GPU API.
+A small 3D renderer in Go, built on SDL3's GPU API. It started as a test and got out of hand.
 
-**Work in progress.** The goal is a robust, easy-to-use `Canvas` object that handles the window and the rendering with high performance, so it can be a solid base for games and graphics engines.
+**Work in progress.** The goal is a robust, easy-to-use `Canvas` object that handles the window and the rendering with high performance, so it can be a solid base for games and graphics engines. I plan to build my own engine on top of it.
 
 ![screenshot](docs/screenshot.png)
 
@@ -32,7 +32,7 @@ go run ./examples/viewer
 
 The viewer draws a checkerboard floor with a chrome sphere and a glass sphere. It also loads a model if it finds `assets/DamagedHelmet.glb`, and just skips it if not.
 
-For the full test, download `DamagedHelmet.glb` from its [Khronos glTF Sample Assets page](https://github.com/KhronosGroup/glTF-Sample-Assets/blob/main/Models/DamagedHelmet/README.md), put it in an `assets` folder in the repo, and run the viewer again. You can also pass any other model as an argument:
+For the full test, download `DamagedHelmet.glb` from the [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/DamagedHelmet/glTF-Binary), put it in an `assets` folder in the repo, and run the viewer again. You can also pass any other model as an argument:
 
 ```
 go run ./examples/viewer path\to\model.glb
