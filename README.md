@@ -1,8 +1,8 @@
 # canvas3d
 
-A small 3D renderer in Go, built on SDL3's GPU API. It started as a test and got out of hand.
+A small 3D renderer in Go.
 
-**Work in progress.** The goal is a robust, easy-to-use `Canvas` object that handles the window and the rendering with high performance, so it can be a solid base for games and graphics engines. I plan to build my own engine on top of it.
+**Work in progress.** The goal is a robust, easy-to-use `Canvas` object that handles the window and the rendering with high performance, so it can be a solid base for games and graphics engines.
 
 ![screenshot](docs/screenshot.png)
 
