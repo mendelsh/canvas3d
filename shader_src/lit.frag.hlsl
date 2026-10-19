@@ -1,4 +1,5 @@
 static const float PI = 3.14159265;
+static const float GOLDEN_ANGLE = 2.39996323;
 
 Texture2D<float4>   baseColorTex  : register(t0, space2);
 SamplerState        baseColorSmp  : register(s0, space2);
@@ -32,8 +33,12 @@ cbuffer Frame : register(b1, space3) {
     float4 shadowParams;
 };
 
+float interleavedGradientNoise(float2 pixel) {
+    return frac(52.9829189 * frac(dot(pixel, float2(0.06711056, 0.00583715))));
+}
+
 // 1 when lit, 0 when fully shadowed.
-float shadowFactor(float3 worldPos, float3 Ng, float NoL) {
+float shadowFactor(float3 worldPos, float3 Ng, float NoL, float2 pixel) {
     if (shadowParams.x < 0.5) {
         return 1.0;
     }
@@ -49,15 +54,19 @@ float shadowFactor(float3 worldPos, float3 Ng, float NoL) {
 
     float bias = shadowParams.z * (1.0 + 2.0 * (1.0 - NoL));
 
+    const int SAMPLES = 16;
+    float rotation = interleavedGradientNoise(pixel) * 6.2831853;
+    float radius = shadowParams.y * 2.0; // softness: 2 texels
+
     float lit = 0.0;
-    [unroll] for (int y = -1; y <= 1; y++) {
-        [unroll] for (int x = -1; x <= 1; x++) {
-            float2 offset = float2(x, y) * shadowParams.y;
-            float depth = shadowMap.SampleLevel(shadowSmp, uv + offset, 0).r;
-            lit += (proj.z - bias <= depth) ? 1.0 : 0.0;
-        }
+    [unroll] for (int i = 0; i < SAMPLES; i++) {
+        float r = sqrt((i + 0.5) / SAMPLES);
+        float theta = i * GOLDEN_ANGLE + rotation;
+        float2 offset = float2(cos(theta), sin(theta)) * r * radius;
+        float depth = shadowMap.SampleLevel(shadowSmp, uv + offset, 0).r;
+        lit += (proj.z - bias <= depth) ? 1.0 : 0.0;
     }
-    return lit / 9.0;
+    return lit / SAMPLES;
 }
 
 float3 skyColor(float3 d) {
@@ -179,7 +188,7 @@ float4 main(
     float shadow0 = 1.0;
     if (count > 0) {
         float nol0 = saturate(dot(N, -lightDirection[0].xyz));
-        shadow0 = shadowFactor(worldPos, Ng, nol0);
+        shadow0 = shadowFactor(worldPos, Ng, nol0, position.xy);
     }
 
     float3 color = float3(0.0, 0.0, 0.0);
