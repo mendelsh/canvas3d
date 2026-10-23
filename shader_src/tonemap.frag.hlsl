@@ -1,5 +1,14 @@
-Texture2D<float4> hdrTex : register(t0, space2);
-SamplerState hdrSmp      : register(s0, space2);
+#ifdef __spirv__
+#define TEXTURE2D(tex, smp, slot) \
+    [[vk::combinedImageSampler]][[vk::binding(slot, 2)]] Texture2D<float4> tex; \
+    [[vk::combinedImageSampler]][[vk::binding(slot, 2)]] SamplerState smp
+#else
+#define TEXTURE2D(tex, smp, slot) \
+    Texture2D<float4> tex : register(t##slot, space2); \
+    SamplerState smp : register(s##slot, space2)
+#endif
+
+TEXTURE2D(hdrTex, hdrSmp, 0);
 
 cbuffer Tonemap : register(b0, space3) {
     float4 params; // x exposure, y mode (0 ACES, 1 Neutral, 2 clamp)
