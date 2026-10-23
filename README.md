@@ -47,8 +47,12 @@ Controls:
 | Left mouse drag | Orbit |
 | Right mouse drag | Pan |
 | Mouse wheel | Zoom |
-| Space | Pause / resume the spin |
+| Space | Pause / resume the model's rotation |
 | F | Print FPS |
+| 1 | Set low rendering quality |
+| 2 | Set medium rendering quality |
+| 3 | Set high rendering quality |
+| T | Cycle through tone mapping modes |
 | Esc | Quit |
 
 ## Small example
@@ -112,19 +116,6 @@ A few rules:
 - `DrawMesh`, `AddLight` and `SetCamera` only record things. The actual drawing happens in `EndFrame`.
 - Destroy meshes, materials and textures before the canvas. Destroy materials before the textures they use.
 - Angles are in radians.
-
-## How it's laid out
-
-```
-canvas3d/
-    *.go             the canvas3d package (window, renderer, materials, math...)
-    model/           glTF / GLB loader, built only on the public API
-    shaders/         compiled shaders (embedded into the library)
-    shader_src/      HLSL sources
-    build_shaders.bat
-    examples/viewer/ the demo above
-    docs/            screenshots
-```
 
 ## Shaders
 

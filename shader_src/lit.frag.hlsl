@@ -1,18 +1,22 @@
 static const float PI = 3.14159265;
 static const float GOLDEN_ANGLE = 2.39996323;
 
-Texture2D<float4>   baseColorTex  : register(t0, space2);
-SamplerState        baseColorSmp  : register(s0, space2);
-Texture2D<float4>   metalRoughTex : register(t1, space2);
-SamplerState        metalRoughSmp : register(s1, space2);
-Texture2D<float4>   normalTex     : register(t2, space2);
-SamplerState        normalSmp     : register(s2, space2);
-Texture2D<float4>   occlusionTex  : register(t3, space2);
-SamplerState        occlusionSmp  : register(s3, space2);
-Texture2D<float4>   emissiveTex   : register(t4, space2);
-SamplerState        emissiveSmp   : register(s4, space2);
-Texture2D<float4>   shadowMap     : register(t5, space2);
-SamplerState        shadowSmp     : register(s5, space2);
+#ifdef __spirv__
+#define TEXTURE2D(tex, smp, slot) \
+    [[vk::combinedImageSampler]][[vk::binding(slot, 2)]] Texture2D<float4> tex; \
+    [[vk::combinedImageSampler]][[vk::binding(slot, 2)]] SamplerState smp
+#else
+#define TEXTURE2D(tex, smp, slot) \
+    Texture2D<float4> tex : register(t##slot, space2); \
+    SamplerState smp : register(s##slot, space2)
+#endif
+
+TEXTURE2D(baseColorTex,  baseColorSmp,  0);
+TEXTURE2D(metalRoughTex, metalRoughSmp, 1);
+TEXTURE2D(normalTex,     normalSmp,     2);
+TEXTURE2D(occlusionTex,  occlusionSmp,  3);
+TEXTURE2D(emissiveTex,   emissiveSmp,   4);
+TEXTURE2D(shadowMap,     shadowSmp,     5);
 
 cbuffer Material : register(b0, space3) {
     float4 baseColor;
@@ -56,7 +60,7 @@ float shadowFactor(float3 worldPos, float3 Ng, float NoL, float2 pixel) {
 
     const int SAMPLES = 16;
     float rotation = interleavedGradientNoise(pixel) * 6.2831853;
-    float radius = shadowParams.y * 2.0; // softness: 2 texels
+    float radius = shadowParams.y * lightCount.y;
 
     float lit = 0.0;
     [unroll] for (int i = 0; i < SAMPLES; i++) {
@@ -122,35 +126,6 @@ float3 getNormal(float3 N, float3 worldPos, float2 uv) {
     return normalize(T * tn.x + B * tn.y + N * tn.z);
 }
 
-// ACES filmic curve (Narkowicz fit). Punchy, rolls highlights off nicely,
-// but shifts saturated colors a little.
-float3 tonemapACES(float3 x) {
-    return saturate((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14));
-}
-
-// Khronos PBR Neutral. Keeps base colors faithful below the highlight range,
-// which suits product-style viewing of glTF models.
-float3 tonemapNeutral(float3 color) {
-    const float startCompression = 0.8 - 0.04;
-    const float desaturation = 0.15;
-
-    float x = min(color.r, min(color.g, color.b));
-    float offset = x < 0.08 ? x - 6.25 * x * x : 0.04;
-    color -= offset;
-
-    float peak = max(color.r, max(color.g, color.b));
-    if (peak < startCompression) {
-        return color;
-    }
-
-    const float d = 1.0 - startCompression;
-    float newPeak = 1.0 - d * d / (peak + d - startCompression);
-    color *= newPeak / peak;
-
-    float g = 1.0 - 1.0 / (desaturation * (peak - newPeak) + 1.0);
-    return lerp(color, newPeak * float3(1.0, 1.0, 1.0), g);
-}
-
 float4 main(
     float4 position : SV_Position, float3 worldPos : TEXCOORD0,
     float3 worldNormal : TEXCOORD1, float2 uv : TEXCOORD2,
@@ -209,7 +184,5 @@ float4 main(
     float3 R = reflect(-V, N);
     float3 envSpec = lerp(skyColor(R), skyAverage, roughness * roughness);
     color += (diffuseColor * skyColor(N) + envSpec * envBRDF(f0, roughness, NoV)) * ao;
-    float3 hdr = (color + emissive) * cameraPos.w;
-
-    return float4(tonemapACES(hdr), outAlpha);
+    return float4(color + emissive, outAlpha);
 }

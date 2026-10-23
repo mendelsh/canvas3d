@@ -18,7 +18,7 @@ set SRC=shader_src
 set OUT=shaders
 if not exist %OUT% mkdir %OUT%
 
-for %%S in (lit shadow) do call :build %%S || exit /b 1
+for %%S in (lit shadow tonemap) do call :build %%S || exit /b 1
 
 echo done
 exit /b 0

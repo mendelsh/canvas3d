@@ -6,12 +6,6 @@ import (
 	"github.com/Zyko0/go-sdl3/sdl"
 )
 
-const vs_name = "lit.vert"
-const fs_name = "lit.frag"
-
-const svs_name = "shadow.vert"
-const sfs_name = "shadow.frag"
-
 const depthFormat = sdl.GPU_TEXTUREFORMAT_D32_FLOAT
 
 type pipelineKey struct {
@@ -19,6 +13,7 @@ type pipelineKey struct {
 	shadow      bool
 	doubleSided bool
 	blend       bool
+	tonemap     bool
 }
 
 func (canvas *Canvas) getPipeline(key pipelineKey) (*sdl.GPUGraphicsPipeline, error) {
@@ -34,9 +29,18 @@ func (canvas *Canvas) getPipeline(key pipelineKey) (*sdl.GPUGraphicsPipeline, er
 		HasDepthStencilTarget:   true,
 		DepthStencilFormat:      depthFormat,
 	}
+
+	if key.shadow {
+		vsName, fsName = svs_name, sfs_name
+		fsUniforms, fsSamplers = 0, 0
+		cull = sdl.GPU_CULLMODE_NONE
+		targets.ColorTargetDescriptions = nil
+	}
+
 	if key.doubleSided {
 		cull = sdl.GPU_CULLMODE_NONE
 	}
+
 	if key.blend {
 		targets.ColorTargetDescriptions = []sdl.GPUColorTargetDescription{{
 			Format: key.colorFormat,
@@ -51,11 +55,9 @@ func (canvas *Canvas) getPipeline(key pipelineKey) (*sdl.GPUGraphicsPipeline, er
 			},
 		}}
 	}
-	if key.shadow {
-		vsName, fsName = svs_name, sfs_name
-		fsUniforms, fsSamplers = 0, 0
-		cull = sdl.GPU_CULLMODE_NONE // keeps thin and one-sided geometry casting shadows
-		targets.ColorTargetDescriptions = nil
+
+	if key.tonemap {
+		return canvas.createTonemapPipeline(key)
 	}
 
 	vs, err := canvas.loadShader(vsName, sdl.GPU_SHADERSTAGE_VERTEX, 1, 0)

@@ -7,6 +7,15 @@ import (
 	"github.com/Zyko0/go-sdl3/sdl"
 )
 
+const vs_name = "lit.vert"
+const fs_name = "lit.frag"
+
+const svs_name = "shadow.vert"
+const sfs_name = "shadow.frag"
+
+const tvs_name = "tonemap.vert"
+const tfs_name = "tonemap.frag"
+
 //go:embed shaders
 var shaderFS embed.FS
 
