@@ -92,6 +92,8 @@ func run() error {
 	rotating := true
 	angle := float32(0)
 
+	tonemapper := 0
+
 	running := true
 	for running {
 		canvas3d.UpdateTime()
@@ -112,6 +114,18 @@ func run() error {
 					rotating = !rotating
 				case canvas3d.K_F:
 					fmt.Printf("FPS: %.0f\n", 1/dt)
+				///
+				/// rendering options
+				///
+				case canvas3d.K_1:
+					canvas.SetQuality(canvas3d.QualityLow)
+				case canvas3d.K_2:
+					canvas.SetQuality(canvas3d.QualityMedium)
+				case canvas3d.K_3:
+					canvas.SetQuality(canvas3d.QualityHigh)
+				case canvas3d.K_T:
+					tonemapper = (tonemapper + 1) % 3
+					canvas.SetTonemapper(canvas3d.Tonemapper(tonemapper))
 				}
 			}
 		}

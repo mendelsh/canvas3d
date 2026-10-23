@@ -113,19 +113,6 @@ A few rules:
 - Destroy meshes, materials and textures before the canvas. Destroy materials before the textures they use.
 - Angles are in radians.
 
-## How it's laid out
-
-```
-canvas3d/
-    *.go             the canvas3d package (window, renderer, materials, math...)
-    model/           glTF / GLB loader, built only on the public API
-    shaders/         compiled shaders (embedded into the library)
-    shader_src/      HLSL sources
-    build_shaders.bat
-    examples/viewer/ the demo above
-    docs/            screenshots
-```
-
 ## Shaders
 
 The shaders are written in HLSL (`shader_src/`) and compiled with `dxc` to DXIL (Direct3D 12) and SPIR-V (Vulkan). The compiled files are committed in `shaders/` and embedded in the library, so you only need `dxc` if you change a shader.

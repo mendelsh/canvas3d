@@ -1,7 +1,5 @@
 package canvas3d
 
-import "github.com/Zyko0/go-sdl3/sdl"
-
 const maxLights = 4
 
 type Light struct {
@@ -56,7 +54,7 @@ func (canvas *Canvas) buildFrameUniforms() frameUniforms {
 		skyZenith:  pad(rend.skyZenith),
 		skyHorizon: pad(rend.skyHorizon),
 		skyGround:  pad(rend.skyGround),
-		lightCount: [4]float32{float32(len(rend.lights))},
+		lightCount: [4]float32{float32(len(rend.lights)), rend.shadowSoftness},
 	}
 
 	for i, light := range rend.lights {
@@ -75,9 +73,10 @@ func (canvas *Canvas) buildFrameUniforms() frameUniforms {
 	}
 
 	if rend.shadowActive {
-		texelWorld := 2 * rend.shadowRadius / shadowMapSize
+		size := float32(rend.shadowTexSize)
+		texelWorld := 2 * rend.shadowRadius / size
 		out.lightViewProj = rend.lightViewProj
-		out.shadowParams = [4]float32{1, 1.0 / shadowMapSize, 0.0005, texelWorld * 1.5}
+		out.shadowParams = [4]float32{1, 1.0 / size, 0.0005, texelWorld * 1.5}
 	}
 
 	return out
@@ -113,39 +112,4 @@ func (canvas *Canvas) updateShadowMatrix() {
 	}
 	view := lookAtUp(eye, c, up)
 	rend.lightViewProj = Mul(orthographic(r, 0.1, r*4), view)
-}
-
-func (canvas *Canvas) recordShadowPass() error {
-	rend := &canvas.rend
-	canvas.updateShadowMatrix()
-
-	pipeline, err := canvas.getPipeline(pipelineKey{shadow: true})
-	if err != nil {
-		return err
-	}
-
-	pass := rend.cmd.BeginRenderPass(nil, &sdl.GPUDepthStencilTargetInfo{
-		Texture:        rend.shadowTex,
-		ClearDepth:     1.0,
-		LoadOp:         sdl.GPU_LOADOP_CLEAR,
-		StoreOp:        sdl.GPU_STOREOP_STORE,
-		StencilLoadOp:  sdl.GPU_LOADOP_DONT_CARE,
-		StencilStoreOp: sdl.GPU_STOREOP_DONT_CARE,
-	})
-	pass.BindGraphicsPipeline(pipeline)
-
-	for _, item := range rend.draws {
-		if item.material != nil && item.material.blend {
-			continue
-		}
-		
-		pass.BindVertexBuffers([]sdl.GPUBufferBinding{{Buffer: item.mesh.vertexBuffer}})
-		pass.BindIndexBuffer(&sdl.GPUBufferBinding{Buffer: item.mesh.indexBuffer}, sdl.GPU_INDEXELEMENTSIZE_32BIT)
-
-		mvp := Mul(rend.lightViewProj, item.transform)
-		rend.cmd.PushVertexUniformData(0, asBytes(&mvp))
-		pass.DrawIndexedPrimitives(item.mesh.indexCount, 1, 0, 0, 0)
-	}
-	pass.End()
-	return nil
 }
