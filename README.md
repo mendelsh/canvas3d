@@ -47,8 +47,12 @@ Controls:
 | Left mouse drag | Orbit |
 | Right mouse drag | Pan |
 | Mouse wheel | Zoom |
-| Space | Pause / resume the spin |
+| Space | Pause / resume the model's rotation |
 | F | Print FPS |
+| 1 | Set low rendering quality |
+| 2 | Set medium rendering quality |
+| 3 | Set high rendering quality |
+| T | Cycle through tone mapping modes |
 | Esc | Quit |
 
 ## Small example
